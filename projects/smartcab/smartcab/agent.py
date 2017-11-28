@@ -44,9 +44,11 @@ class LearningAgent(Agent):
 		self.epsilon = 0
 		self.alpha = 0
 	else:
-		self.epsilon = self.epsilon * 0.95
-		#self.epsilon = self.epsilon * math.exp(-0.1)
-		#self.epsilon = self.epsilon - 0.05
+		# for optimized learner
+                # self.epsilon = self.epsilon * 0.98
+
+                # for default learner
+		self.epsilon = self.epsilon - 0.05
         return None
 
     def build_state(self):
@@ -63,7 +65,7 @@ class LearningAgent(Agent):
         ## TO DO ##
         ###########
         # Set 'state' as a tuple of relevant data for the agent        
-        state = (waypoint, inputs['light'], inputs['oncoming'])
+        state = (waypoint, inputs['light'], inputs['oncoming'], inputs['left'])
 
         return state
 
@@ -120,14 +122,16 @@ class LearningAgent(Agent):
 		action = random.choice(self.valid_actions)
 	else:
 		 possible_actions = self.Q[state]
-	 	 maxQ_action = max(possible_actions.items(), key = lambda x:x[1])[0]
-
-		 if(random.random()  >  1- self.epsilon):
-			next_actions = filter(lambda x: x != maxQ_action, self.valid_actions)
-			action = random.choice(next_actions)
+	 	 maxQ_action, maxQ = max(possible_actions.items(), key = lambda x:x[1])
+                 
+                 max_actions = [k for k,v in possible_actions.items() if v == maxQ]                 
+		 if(random.random()  < self.epsilon):
+			# next_actions = filter(lambda x: x != maxQ_action, self.valid_actions)
+			action = random.choice(self.valid_actions)
 	         else:
+
 			print "MaxQ_action: %s taken" % (maxQ_action)
-			action = maxQ_action	
+			action = random.choice(max_actions)
 
         return action
 
@@ -142,7 +146,8 @@ class LearningAgent(Agent):
         ###########
         # When learning, implement the value iteration update rule
         #   Use only the learning rate 'alpha' (do not use the discount factor 'gamma')
-        self.Q[state][action] = self.Q[state][action] * (1 - self.alpha) + self.alpha * reward
+        if self.learning:
+           self.Q[state][action] = self.Q[state][action] * (1 - self.alpha) + self.alpha * reward
         return
 
 
@@ -193,7 +198,7 @@ def run():
     #   display      - set to False to disable the GUI if PyGame is enabled
     #   log_metrics  - set to True to log trial and simulation results to /logs
     #   optimized    - set to True to change the default log file name
-    sim = Simulator(env, update_delay = 0.01, display = False, log_metrics = True, optimized = True)
+    sim = Simulator(env, update_delay = 0.01, display = False, log_metrics = True, optimized = False)
     
     ##############
     # Run the simulator
